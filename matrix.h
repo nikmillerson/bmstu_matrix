@@ -25,6 +25,9 @@ namespace bmstu {
         }
 
         matrix(std::initializer_list<T> i_list, size_t rows, size_t columns) : rows_(rows), columns_(columns) {
+            if (!std::is_arithmetic_v<T>){
+                throw std::logic_error("Type must be a number");
+            }
             if ((rows_ * columns_) == i_list.size()) {
                 data_.resize(i_list.size());
                 std::move(i_list.begin(), i_list.end(), data_.data());
@@ -36,28 +39,39 @@ namespace bmstu {
                     representation_.push_back(std::move(vtmp));
                 }
             } else {
-                throw std::logic_error("Rows or/and columns don't match i_list size");
+                throw std::out_of_range("Rows or/and columns don't match i_list size");
             }    // конструктор копирования из ай_листа в дату, а потом в репрезентейшн
         }
 
         T &operator()(size_t row, size_t column) { // оператор возврата ссылки на определенный элемент матрицы
-            return *representation_[row][column];
+            if ((row > rows_) || (column > columns_)){
+                throw std::out_of_range("Input row or/and column is out of range");
+            } else {return *representation_[row][column];}
         }
 
         T operator()(size_t row, size_t column) const {  // оператор возврата определенного элемента матрицы
-            return *representation_[row][column];
+            if ((row > rows_) || (column > columns_)){
+                throw std::out_of_range("Input row or/and column is out of range");
+            } else {return *representation_[row][column];}
         }
 
         std::vector<T *> operator[](size_t i) {     // оператор возврата строки из указателей
-            return representation_[i];
+            if (representation_.size() < i){
+                throw std::out_of_range("Input row is out of range");
+            } else {return representation_[i];}
         }
 
         std::vector<T> operator[](size_t i) const { // оператор возврата строки из элементов
-            std::vector<T> result(columns_);
-            for (size_t j = 0; j < columns_; ++j) {
-                result[j] = *representation_[i][j];
+            if (representation_.size() < i){
+                throw std::out_of_range("Input row is out of range");
+            } else {
+                std::vector<T> result(columns_);
+                for (size_t j = 0; j < columns_; ++j) {
+                    result[j] = *representation_[i][j];
+                }
+                return result;
             }
-            return result;
+
         }
 
         T det() {
@@ -68,9 +82,9 @@ namespace bmstu {
                 for (size_t i = 0; i < columns_; ++i) {
                     indexes[i] = i;
                 }
-                permute(indexes, indexes.size(), result, sign); // пермут дописать
+                permute(indexes, indexes.size(), result, sign);
                 return result;
-            } else { throw std::logic_error("matrix must be square"); }
+            } else { throw std::logic_error("Matrix must be square"); }
         }
 
         friend std::ostream &operator<<(std::ostream &ovs, const matrix<T> &obj) {
@@ -168,7 +182,7 @@ namespace bmstu {
                     rownum += 1;
                 }
                 return result;
-            } else { throw std::out_of_range("Row or/and column of minor > rows or/and columns of initial matrix"); }
+            } else { throw std::out_of_range("Row or/and column of minor must not be > rows or/and columns of initial matrix"); }
         }
 
         matrix<T> adj() {
@@ -183,7 +197,7 @@ namespace bmstu {
                 }
                 result.transpose();
                 return result;
-            } else { throw std::logic_error("matrix must be square"); }
+            } else { throw std::logic_error("Matrix must be square"); }
         }
 
         matrix<double> reverse() {
@@ -196,7 +210,7 @@ namespace bmstu {
                     }
                 }
                 return result;
-            } else { throw std::logic_error("matrix must be square and det not 0"); }
+            } else { throw std::logic_error("Matrix must be square and det not 0"); }
         }
 
     private:

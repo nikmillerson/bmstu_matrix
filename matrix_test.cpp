@@ -25,6 +25,18 @@ TEST(Constructor, i_list){
             ASSERT_EQ(test_matrix(i,j), i*4 + j + 1);
         }
     }
+
+    try {
+        matrix<int> bad_matrix({1, 2, 3}, 2, 4);
+    } catch (std::out_of_range const& error) {
+        EXPECT_EQ(error.what(), std::string("Rows or/and columns don't match i_list size"));
+    }
+
+    try {
+        matrix<char> bad_matrix({'a', 'b', 'c'}, 1, 3);
+    } catch (std::logic_error const& error) {
+        EXPECT_EQ(error.what(), std::string("Type must be a number"));
+    }
 }
 
 TEST(Method, GetMinorMatrix){
@@ -35,6 +47,11 @@ TEST(Method, GetMinorMatrix){
         for (int j=0; j<2; j++){
             ASSERT_EQ(test_matrix(i,j), minor_matrix(i,j));
         }
+    }
+    try {
+        matrix<int> bad_minor_matrix = big_matrix.get_minor_matrix(999, 999);
+    } catch (std::out_of_range const& error) {
+        ASSERT_EQ(error.what(), std::string("Row or/and column of minor must not be > rows or/and columns of initial matrix"));
     }
 }
 
@@ -47,6 +64,12 @@ TEST(Method, Adjugate){
             ASSERT_EQ(test_matrix(i,j), adjugate_matrix(i,j));
         }
     }
+    matrix<int> another_test_matrix({10, 12, 13, 14}, 2, 2);
+    try {
+        matrix<int> bad_matrix = another_test_matrix.adj();
+    } catch (std::logic_error const& error) {
+        EXPECT_EQ(error.what(), std::string("Matrix must be square"));
+    }
 }
 
 TEST(Method, Reverse){
@@ -58,10 +81,28 @@ TEST(Method, Reverse){
             ASSERT_EQ(test_matrix(i,j), reverse_matrix(i,j));
         }
     }
+    matrix<double> test_matrix_square_with_det_0({1, 2, 3, 4, 5, 6, 7, 8, 9}, 3 ,3);
+    matrix<double> test_matrix_not_square({1, 2, 3, 4}, 2, 2);
+    try {
+        matrix<double> bad_matrix = test_matrix_square_with_det_0.adj();
+    } catch (std::logic_error const& error) {
+        EXPECT_EQ(error.what(), std::string("Matrix must be square and det not 0"));
+    }
+    try {
+        matrix<double> another_bad_matrix = test_matrix_not_square.adj();
+    } catch (std::logic_error const& error) {
+        EXPECT_EQ(error.what(), std::string("Matrix must be square and det not 0"));
+    }
 }
 TEST(Method, Determinant){
     matrix<int> begin_matrix({1, 2, 3, 4, 5, 6, 7, 8, 9}, 3, 3);
     ASSERT_EQ(begin_matrix.det(), 0);
+    matrix<int> bad_matrix({1, 2, 3, 4, 5, 6}, 2, 3);
+    try {
+        int bad_determinant = bad_matrix.det();
+    } catch(std::logic_error const& error) {
+        EXPECT_EQ(error.what(), std::string("Matrix must be square"));
+    }
 }
 
 TEST(Method, Transpose){
@@ -80,6 +121,11 @@ TEST(Operator, ReturnSpecificElement){
     int correct_element = 5;
     int test_element = first_matrix(1, 1);
     ASSERT_EQ(correct_element, test_element);
+    try {
+        int bad_element = first_matrix(999, 999);
+    } catch (std::out_of_range const& error) {
+        EXPECT_EQ(error.what(), std::string("Input row or/and column is out of range"));
+    }
 }
 
 TEST(Operator, ReturnSpecificRow){
@@ -88,6 +134,11 @@ TEST(Operator, ReturnSpecificRow){
     std::vector<int*> test_row = first_matrix[0];
     for (int i=0; i<3; i++){
         ASSERT_EQ(correct_row[i], *test_row[i]);
+    }
+    try {
+        std::vector<int*> bad_row = first_matrix[999];
+    } catch (std::out_of_range const& error) {
+        EXPECT_EQ(error.what(), std::string("Input row is out of range"));
     }
 }
 
@@ -107,6 +158,22 @@ TEST(Operator, MatrixMultiplication){
         for (int j=0; j<3; j++) {
             ASSERT_EQ(test_matrix(i,j), multiplied_matrix(i,j));
         }
+    }
+
+    matrix<int> another_test_matrix = second_matrix * first_matrix;
+    matrix<int> another_multiplied_matrix({42, 51, 60, 78, 96, 114, 114, 141, 168}, 3 ,3);
+    for (int i=0; i<3; i++) {
+        for (int j=0; j<3; j++) {
+            ASSERT_EQ(another_test_matrix(i,j), another_multiplied_matrix(i,j));
+        }
+    }
+
+
+    matrix<int> bad_matrix({1, 2, 3, 4}, 2, 2);
+    try {
+        matrix<int> bad_multiplied_matrix = bad_matrix * second_matrix;
+    } catch(std::logic_error const& error){
+        EXPECT_EQ(error.what(), std::string("Rows and columns must match"));
     }
 }
 
@@ -131,6 +198,12 @@ TEST(Operator, Summ){
             ASSERT_EQ(test_matrix(i,j), summ_matrix(i,j));
         }
     }
+    matrix<int> third_matrix({1, 2, 3, 4}, 2 ,2);
+    try {
+        matrix<int> bad_matrix = first_matrix + third_matrix;
+    } catch (std::logic_error const& error) {
+        EXPECT_EQ(error.what(), std::string("Rows and columns must match"));
+    }
 }
 
 TEST(Operator, Subs){
@@ -142,5 +215,11 @@ TEST(Operator, Subs){
         for (int j=0; j<3; j++) {
             ASSERT_EQ(test_matrix(i,j), subs_matrix(i,j));
         }
+    }
+    matrix<int> third_matrix({1, 2, 3, 4}, 2 ,2);
+    try {
+        matrix<int> bad_matrix = first_matrix - third_matrix;
+    } catch (std::logic_error const& error) {
+        EXPECT_EQ(error.what(), std::string("Rows and columns must match"));
     }
 }
